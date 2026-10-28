@@ -18,7 +18,7 @@ if [[ "${JODOK_AUTO_SEED:-true}" == "true" ]]; then
 
   ready=false
   for _ in {1..30}; do
-    if db --batch --skip-column-names -e 'SELECT 1' >/dev/null 2>&1; then
+    if db --batch --skip-column-names -e 'SELECT 1' >/dev/null 2>/tmp/aiven-error.log; then
       ready=true
       break
     fi
@@ -27,6 +27,7 @@ if [[ "${JODOK_AUTO_SEED:-true}" == "true" ]]; then
   done
   if [[ "$ready" != 'true' ]]; then
     echo '[JODOK] Aiven is unreachable. Verify host/port/defaultdb/username/password and that service is RUNNING.' >&2
+    cat /tmp/aiven-error.log >&2
     exit 1
   fi
 
