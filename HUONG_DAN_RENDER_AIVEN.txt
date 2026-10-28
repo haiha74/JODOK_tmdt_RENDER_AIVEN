@@ -1,0 +1,76 @@
+HUONG DAN DEPLOY JODOK -> RENDER FREE + AIVEN MYSQL FREE
+===========================================================
+Nguon: JODOK_FULL_DEPLOY_NORTHFLANK.zip, khong thay doi logic nghiep vu.
+Bản SQL demo gốc: 17 bảng (có 1 bảng liên kết không có PRIMARY KEY).
+
+0. KIEM TRA GIOI HAN
+  Render Free: 512MB RAM / 0.1 CPU, ngu sau 15 phut khong co traffic.
+  Aiven MySQL Free: 1GB RAM, 1GB disk, khong can the, co the tam dung khi it hoat dong.
+  Hinh demo dong goi trong Docker van duoc giu; anh upload moi se mat khi app restart/ngu/redeploy.
+  Neu Java vuot 512MB thi co the khong chay duoc tren Free; can toi uu them hoac nang cap.
+
+1. TAO MYSQL FREE TREN AIVEN (LAM TRUOC)
+  https://console.aiven.io/ -> sign up -> New service -> MySQL -> plan Free.
+  Chon vung gan Render (Singapore neu ho tro Free), dat ten jodok-mysql.
+  Cho den khi service RUNNING. Vao Overview -> Connection information.
+  Ghi lai: Host, Port, User, Password, Database (thuong la defaultdb).
+  QUAN TRONG: PORT cua Aiven khong phai luc nao cung la 3306.
+  Khong can import SQL thu cong: JODOK tu import 1 lan vao database moi.
+
+2. DUA SOURCE LEN GITHUB (REPO PRIVATE)
+  Giai nen file ZIP. Vao ben trong thu muc tmdt (noi co pom.xml, Dockerfile).
+  Push NOI DUNG thu muc tmdt (khong push file ZIP) len 1 repo PRIVATE.
+  Neu ban push ca thu muc tmdt lam subfolder, tren Render Root Directory = tmdt.
+  Khong dua them file .env hay key that len public repository.
+
+3. TAO RENDER WEB SERVICE FREE
+  https://dashboard.render.com/ -> New -> Web Service.
+  Connect GitHub repo, branch main, Root Directory rong neu repo root chua pom.xml.
+  Runtime: Docker; plan: Free; region: Singapore (neu co).
+  Render doc khoang 512MB RAM, 0.1 CPU. Build bang Dockerfile.
+  Environment -> them cac bien trong RENDER_VARIABLES.example.
+  Neu tao bang Blueprint render.yaml: phai dien 4 gia tri MySQL va Render sinh JWT_SECRET.
+  Khi tao Web Service bang GUI: tu tao JWT_SECRET chuoi ngau nhien >=32 ky tu.
+  CREATE WEB SERVICE => xem Logs (build Maven, import SQL lan dau, start Spring Boot).
+
+4. KIEM TRA
+  Cho Render build/deploy xong, mo https://<name>.onrender.com
+  Thu trang chu, san pham, admin, login, gio hang, chatbot.
+  Neu PayOS tra ve localhost: add APP_PUBLIC_BASE_URL=https://<name>.onrender.com
+  Free se ngu sau 15 phut. Moi lan truy cap lai co the phai doi khoi dong.
+
+5. CAC LOI THUONG GAP
+  'Cannot connect to MySQL': Aiven service Running? Host/Port/User/Password/DB dung?
+  'Access denied': username/password sai, khong dung MYSQLUSER=root.
+  'Unknown database': MYSQLDATABASE thuong la defaultdb.
+  'OOM killed' / 'Exited with code 137': Render Free 512MB RAM khong du.
+  SQL error: kiem tra [JODOK] import logs; DB must be FRESH and empty before first run.
+  Neu import dang do va marker chua tao, tao DB moi hoac don sach truoc khi deploy lai.
+  Anh upload mat khi app ngu/redeploy la gioi han Render Free (khong co persistent disk).
+  'No open ports detected': setting PORT=10000 va port trong application-prod.properties.
+  Lay key GROQ API va PayOS test tu cau hinh goc, dat trong Render Environment.
+  Cac khoá demo trong source khong nen de tren GitHub public.
+
+FILES CHINH
+  Dockerfile: build Java 17, dong goi anh, chay app.
+  docker-entrypoint.sh: seeder SQL chi chay 1 lan neu DB chua co marker.
+  application-prod.properties: JDBC SSL mode REQUIRED + PORT Render + Hikari pool gon.
+  seed/fashionweb.sql: du lieu demo, thêm 1 session SQL de tuong thich Aiven PK.
+  render.yaml: Render Blueprint tu dong cho 1 Web Service Free.
+  RENDER_VARIABLES.example: mau bien moi truong neu thao tac bang UI.
+
+DA XAC THUC FILE / CUA TOOL
+  Kiem tra tinh toan ven file ZIP, cu phap bash va YAML; CHUA build Docker
+  hoac chay tren Render/Aiven do chua co quyen truy cap tai khoan.
+
+BO SUNG KIEM TRA CHO BAN TMDT(5)
+  - Source tmdt(5).zip trung 100% code voi tmdt(4).zip (tru cac file git/target).
+  - Tu dong nap du lieu CHI khi database Aiven moi HOAN TOAN TRONG.
+  - Neu DB da co bang, khoi dong se tu choi de tranh lam mat du lieu.
+  - Da sua port Docker Compose local 8080 -> container 10000.
+  - 3 anh goc bi thieu, da bo sung anh du phong cua CUNG san pham theo duong dan goc.
+    Anh du phong chi de khong bi vo anh; 2 anh theo mau co the khong trung mau goc.
+  - TUYET DOI KHONG day .env hay thu muc .git len GitHub.
+  - Khi tao Web Service, su dung repo PRIVATE va dat APP_PUBLIC_BASE_URL sau khi co domain.
+  - Can cung cap GROQ_API_KEY de chatbot AI chay va PAYOS_* neu dung thanh toan.
+  - Chua build/chay tren Render va Aiven thuc te; kiem tra Logs sau deploy.

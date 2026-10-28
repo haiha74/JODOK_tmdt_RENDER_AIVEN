@@ -1,0 +1,15 @@
+.git
+.github
+.vscode
+.idea
+.env
+.env.*
+*.zip
+*.log
+logs
+target
+**/target
+.mvn
+mvnw
+mvnw.cmd
+__pycache__

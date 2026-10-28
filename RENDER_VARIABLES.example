@@ -1,0 +1,20 @@
+# RENDER WEB SERVICE -> Environment -> Add Environment Variable
+# Copy NAME and corresponding Aiven Overview value into Render UI.
+# Do NOT paste this file with placeholder values as-is.
+SPRING_PROFILES_ACTIVE=prod
+PORT=10000
+JODOK_AUTO_SEED=true
+MYSQLHOST=your-aiven-host.aivencloud.com
+MYSQLPORT=your-aiven-port
+MYSQLDATABASE=defaultdb
+MYSQLUSER=avnadmin
+MYSQLPASSWORD=your-aiven-password
+JWT_SECRET=replace-with-a-random-string-at-least-32-characters
+# OPTIONAL (if chatbot uses Groq):
+# GROQ_API_KEY=your-test-key
+# OPTIONAL (after getting Render public URL):
+# APP_PUBLIC_BASE_URL=https://your-jodok.onrender.com
+# OPTIONAL: PayOS test keys, if you wish to override application.properties:
+# PAYOS_CLIENT_ID=your-client-id
+# PAYOS_API_KEY=your-api-key
+# PAYOS_CHECKSUM_KEY=your-checksum-key

@@ -1,0 +1,181 @@
+
+/* JODOK - INFORMATION PAGES */
+
+.info-layout {
+    display: grid;
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+    padding-top: 48px;
+    padding-bottom: 72px;
+}
+
+.info-sidebar,
+.info-content {
+    background: #fff;
+    border: 1px solid #e9e5e2;
+    border-radius: 16px;
+}
+
+.info-sidebar {
+    position: sticky;
+    top: 130px;
+    padding: 22px 16px;
+}
+
+.info-nav-group + .info-nav-group {
+    margin-top: 26px;
+}
+
+.info-nav-group h3 {
+    margin: 0 10px 12px;
+    color: #991b1b;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .05em;
+}
+
+.info-nav-group a {
+    display: block;
+    padding: 11px 12px;
+    border-radius: 9px;
+    color: #404040;
+    font-size: 13px;
+    line-height: 1.5;
+    text-decoration: none;
+    transition: background .2s, color .2s;
+}
+
+.info-nav-group a:hover,
+.info-nav-group a.active {
+    background: #fff1f2;
+    color: #991b1b;
+}
+
+.info-nav-group a.active {
+    font-weight: 700;
+}
+
+.info-content {
+    min-width: 0;
+    padding: 38px 44px;
+}
+
+.info-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 22px;
+    color: #737373;
+    font-size: 13px;
+}
+
+.info-breadcrumb a {
+    color: #991b1b;
+    text-decoration: none;
+}
+
+.info-content h1 {
+    margin: 0 0 14px;
+    color: #171717;
+    font-size: clamp(26px, 3vw, 38px);
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.info-intro {
+    margin: 0 0 32px;
+    padding-bottom: 26px;
+    border-bottom: 1px solid #eee;
+    color: #666;
+    font-size: 15px;
+    line-height: 1.8;
+}
+
+.info-section {
+    margin-bottom: 30px;
+}
+
+.info-section h2 {
+    margin: 0 0 14px;
+    color: #991b1b;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.info-section p {
+    margin: 0 0 12px;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.9;
+}
+
+.info-contact {
+    margin-top: 36px;
+    padding: 20px 24px;
+    border-left: 4px solid #991b1b;
+    border-radius: 8px;
+    background: #fff7f7;
+}
+
+.info-contact strong {
+    font-size: 15px;
+}
+
+.info-contact p {
+    margin: 8px 0 0;
+    color: #525252;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.info-not-found {
+    padding-top: 90px;
+    padding-bottom: 120px;
+    text-align: center;
+}
+
+.info-not-found h1 {
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.info-not-found p {
+    margin: 16px 0;
+}
+
+.info-not-found a {
+    color: #991b1b;
+    font-weight: 700;
+}
+
+@media (max-width: 900px) {
+    .info-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding-top: 24px;
+    }
+
+    .info-sidebar {
+        position: static;
+    }
+
+    .info-content {
+        padding: 26px 22px;
+    }
+}
+
+@media (max-width: 640px) {
+    .info-layout {
+        padding-bottom: 40px;
+    }
+
+    .info-content {
+        padding: 22px 16px;
+    }
+
+    .info-section h2 {
+        font-size: 16px;
+    }
+}

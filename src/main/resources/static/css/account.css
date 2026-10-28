@@ -1,0 +1,306 @@
+
+/* =========================================================
+   JODOK - ACCOUNT PAGE + HEADER ACCOUNT MENU
+========================================================= */
+
+
+/* =========================================================
+   1. ACCOUNT PAGE
+========================================================= */
+
+.account-card {
+    background: #fff;
+    border: 1px solid #ebe5e1;
+    border-radius: 15px;
+    padding: 26px 30px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, .025);
+}
+
+.account-card-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid #eee;
+}
+
+.account-heading-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: #fff1f2;
+    color: #991b1b;
+    border-radius: 50%;
+}
+
+.account-heading-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.account-card-heading h2 {
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.account-card-heading p {
+    margin-top: 4px;
+    color: #777;
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   2. ACCOUNT SECTION
+========================================================= */
+
+.account-section-heading {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 25px 0 18px;
+}
+
+.account-section-heading svg {
+    width: 19px;
+    height: 19px;
+    color: #991b1b;
+}
+
+.account-section-heading h3 {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.account-address-heading {
+    padding-top: 23px;
+    margin-top: 28px;
+    border-top: 1px solid #eee;
+}
+
+
+/* =========================================================
+   3. ACCOUNT FORM
+========================================================= */
+
+.account-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 19px;
+}
+
+.account-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.account-field-full {
+    grid-column: 1 / -1;
+}
+
+.account-field > span {
+    font-size: 12px;
+    font-weight: 700;
+    color: #333;
+}
+
+.account-field b {
+    color: #991b1b;
+}
+
+.account-field input,
+.account-field textarea {
+    width: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    background: #fff;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.account-field input {
+    height: 46px;
+}
+
+.account-field textarea {
+    min-height: 108px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.account-field input:focus,
+.account-field textarea:focus {
+    border-color: #991b1b;
+    box-shadow: 0 0 0 3px rgba(153, 27, 27, .07);
+}
+
+.account-field input[readonly] {
+    background: #f8f7f6;
+    color: #777;
+    cursor: not-allowed;
+}
+
+.account-field small {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   4. FORM MESSAGE
+========================================================= */
+
+.account-message {
+    margin-top: 17px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.account-message:empty {
+    display: none;
+}
+
+.account-message.success {
+    color: #15803d;
+}
+
+.account-message.error {
+    color: #b91c1c;
+}
+
+
+/* =========================================================
+   5. FORM ACTIONS
+========================================================= */
+
+.account-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px solid #eee;
+}
+
+.account-reset-btn,
+.account-save-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 44px;
+    padding: 0 22px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    transition: .2s;
+}
+
+.account-reset-btn {
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #333;
+}
+
+.account-reset-btn:hover {
+    background: #f8f7f6;
+}
+
+.account-save-btn {
+    background: #991b1b;
+    color: #fff;
+}
+
+.account-save-btn:hover {
+    background: #7f1d1d;
+}
+
+.account-save-btn:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+.account-save-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+
+/* ====================================
+   JODOK - ĐỊA CHỈ NHẬN HÀNG
+   Giao diện nhỏ gọn, cân đối
+   ==================================== */
+
+.account-page .account-form-grid:has(#accountProvince) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 18px;
+    width: 100%;
+}
+
+/* Hai ô tỉnh/thành và phường/xã */
+.account-page .account-form-grid:has(#accountProvince)
+label {
+    min-width: 0;
+    width: 100%;
+}
+
+/* Chữ tiêu đề các trường */
+.account-page .account-form-grid:has(#accountProvince)
+label > span {
+    display: block;
+    font-size: 12px !important;
+    font-weight: 600;
+    margin-bottom: 7px;
+    color: #374151;
+}
+
+/* Nội dung bên trong ô nhập */
+.account-page #accountProvince,
+.account-page #accountWard,
+.account-page #accountStreet {
+    width: 100% !important;
+    min-height: 40px !important;
+    height: 40px;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    border-radius: 9px !important;
+    box-sizing: border-box;
+}
+
+/* Số nhà, tên đường chiếm toàn bộ chiều ngang */
+.account-page .account-form-grid:has(#accountProvince)
+.account-field-full {
+    grid-column: 1 / -1;
+}
+
+/* Chú thích bên dưới */
+.account-page #accountAddressHint {
+    grid-column: 1 / -1;
+    font-size: 11px !important;
+    line-height: 1.5;
+    margin-top: 0;
+    color: #9ca3af;
+}
+
+/* Tiêu đề khu vực địa chỉ */
+.account-page .account-address-heading h3 {
+    font-size: 15px !important;
+    font-weight: 700;
+}
+
+/* Điện thoại */
+@media (max-width: 640px) {
+    .account-page .account-form-grid:has(#accountProvince) {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
