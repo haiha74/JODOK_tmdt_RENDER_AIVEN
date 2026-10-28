@@ -11,7 +11,7 @@ if [[ "${JODOK_AUTO_SEED:-true}" == "true" ]]; then
   : "${MYSQLPASSWORD:?Required: MYSQLPASSWORD}"
 
   db() {
-    MYSQL_PWD="$MYSQLPASSWORD" mysql --protocol=TCP --ssl --connect-timeout=12 \
+    MYSQL_PWD="$MYSQLPASSWORD" mysql --protocol=TCP --ssl-mode=REQUIRED --connect-timeout=12 \
       --host="$MYSQLHOST" --port="$MYSQLPORT" --user="$MYSQLUSER" \
       --database="$MYSQLDATABASE" "$@"
   }
