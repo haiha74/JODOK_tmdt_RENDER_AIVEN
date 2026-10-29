@@ -10,9 +10,17 @@ import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    List<Product> findByProductNameContaining(String keyword);
+    @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.images LEFT JOIN FETCH p.category LEFT JOIN FETCH p.brand WHERE p.status = 'ACTIVE' AND p.productName LIKE CONCAT('%', :keyword, '%')")
+    List<Product> searchActiveWithDetails(@org.springframework.data.repository.query.Param("keyword") String keyword);
 
-    List<Product> findByCategory_CategoryId(Long categoryId);
+    @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.images LEFT JOIN FETCH p.category LEFT JOIN FETCH p.brand WHERE p.status = 'ACTIVE' AND p.category.categoryId = :categoryId")
+    List<Product> findActiveByCategoryWithDetails(@org.springframework.data.repository.query.Param("categoryId") Long categoryId);
+
+    // Read just the price columns; do not hydrate hundreds of products/images.
+    @Query("SELECT p.productId, p.basePrice FROM Product p WHERE p.basePrice IS NOT NULL")
+    List<Object[]> findProductPrices();
+
+    List<Product> findTop10ByStatusAndCategory_CategoryIdOrderByProductIdAsc(String status, Long categoryId);
 
     // Tải sản phẩm ACTIVE cùng ảnh/danh mục/thương hiệu trong một truy vấn.
     // Tránh N+1 SQL queries khi dữ liệu đặt ở Aiven xa máy chủ Render.
@@ -24,6 +32,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         WHERE p.status = 'ACTIVE'
     """)
     List<Product> findAllActiveWithCatalogDetails();
+
+    @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.images LEFT JOIN FETCH p.category LEFT JOIN FETCH p.brand")
+    List<Product> findAllForAdminWithCatalogDetails();
 
     @Modifying
     @Query(value = "DELETE FROM sale_event_products WHERE product_id = ?1", nativeQuery = true)

@@ -64,8 +64,8 @@ async function checkStaff(){
     document.getElementById("staffLogin").classList.add("hidden");
     document.getElementById("staffDashboard").classList.remove("hidden");
 
-    await loadOrders();
-    await loadVariants();
+    // Independent dashboard datasets should arrive concurrently.
+    await Promise.all([loadOrders(), loadVariants()]);
     renderStaffPage();
   }
 }
@@ -104,17 +104,21 @@ function logoutStaff(){
 }
 
 async function loadOrders(){
-  const res = await fetch(`${API_BASE}/orders`, {
+  const res = await fetch(`${API_BASE}/orders/admin-overview`, {
     headers: staffAuthHeaders()
   });
-  orders = await res.json();
+  if (!res.ok) throw new Error(`Không tải được đơn hàng (HTTP ${res.status})`);
+  const rows = await res.json();
+  orders = Array.isArray(rows) ? rows : [];
 }
 
 async function loadVariants(){
   const res = await fetch(`${API_BASE}/variants`, {
     headers: staffAuthHeaders()
   });
-  variants = await res.json();
+  if (!res.ok) throw new Error(`Không tải được biến thể (HTTP ${res.status})`);
+  const rows = await res.json();
+  variants = Array.isArray(rows) ? rows : [];
 }
 
 function renderStats(){

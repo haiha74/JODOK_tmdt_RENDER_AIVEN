@@ -53,37 +53,13 @@ public class RecommendationController {
         if (!currentUser.getUserId().equals(userId)) {
             return List.of();
         }
-        List<ProductView> views = productViewRepository.findByUser_UserId(userId);
-
-        if (views.isEmpty()) {
+        // Aggregate view counts in MySQL instead of fetching every historical view.
+        List<Object[]> counts = productViewRepository.findCategoryViewCounts(userId);
+        if (counts.isEmpty() || counts.get(0)[0] == null) {
             return List.of();
         }
-
-        Map<Long, Integer> categoryScore = new HashMap<>();
-
-        for (ProductView v : views) {
-            if (v.getProduct() != null && v.getProduct().getCategory() != null) {
-                Long categoryId = v.getProduct().getCategory().getCategoryId();
-                categoryScore.put(categoryId, categoryScore.getOrDefault(categoryId, 0) + 1);
-            }
-        }
-
-        Long topCategoryId = categoryScore.entrySet()
-                .stream()
-                .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .orElse(null);
-
-        if (topCategoryId == null) {
-            return List.of();
-        }
-
-        return productRepository.findAll()
-                .stream()
-                .filter(p -> p.getStatus() != null && p.getStatus().equals("ACTIVE"))
-                .filter(p -> p.getCategory() != null)
-                .filter(p -> p.getCategory().getCategoryId().equals(topCategoryId))
-                .limit(10)
-                .toList();
+        Long categoryId = ((Number) counts.get(0)[0]).longValue();
+        // Keep the original behaviour: only ACTIVE products from top category, max 10.
+        return productRepository.findTop10ByStatusAndCategory_CategoryIdOrderByProductIdAsc("ACTIVE", categoryId);
     }
 }

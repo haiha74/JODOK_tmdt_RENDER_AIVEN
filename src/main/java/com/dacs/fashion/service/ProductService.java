@@ -43,7 +43,7 @@ public class ProductService {
     }
 
     public List<Product> getAllForAdmin() {
-        return productRepository.findAll();
+        return productRepository.findAllForAdminWithCatalogDetails();
     }
 
     public Product getById(Long id) {
@@ -58,17 +58,11 @@ public class ProductService {
     }
 
     public List<Product> search(String keyword) {
-        return productRepository.findByProductNameContaining(keyword)
-                .stream()
-                .filter(p -> "ACTIVE".equals(p.getStatus()))
-                .toList();
+        return productRepository.searchActiveWithDetails(keyword);
     }
 
     public List<Product> getByCategory(Long categoryId) {
-        return productRepository.findByCategory_CategoryId(categoryId)
-                .stream()
-                .filter(p -> "ACTIVE".equals(p.getStatus()))
-                .toList();
+        return productRepository.findActiveByCategoryWithDetails(categoryId);
     }
 
     public Product create(ProductDTO dto) {

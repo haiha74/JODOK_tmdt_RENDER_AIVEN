@@ -440,7 +440,8 @@ async function saveProductView(productId) {
       `${API_BASE}/recommendations/view`,
       {
         method: "POST",
-
+        // Allow the tiny tracking request to complete after navigation.
+        keepalive: true,
         headers: {
           "Content-Type": "application/json",
           Authorization: "Bearer " + user.token
@@ -464,9 +465,9 @@ async function saveProductView(productId) {
    PRODUCT DETAIL
 ========================================= */
 
-async function detail(id) {
-  await saveProductView(id);
-
+function detail(id) {
+  // Navigation must not wait for a database write across continents.
+  void saveProductView(id);
   location.href = `/detail?productId=${id}`;
 }
 
@@ -935,7 +936,7 @@ function card(p, index) {
             <img
               src="${imageUrl}"
               alt="${productName}"
-              loading="lazy"
+              loading="lazy" decoding="async"
               onerror="handleProductImageError(this)"
             >
           `

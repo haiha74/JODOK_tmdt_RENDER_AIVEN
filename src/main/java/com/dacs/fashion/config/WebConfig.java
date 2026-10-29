@@ -11,6 +11,8 @@ public class WebConfig implements WebMvcConfigurer {
         String uploadDir = "file:" + System.getProperty("user.dir") + "/uploads/";
 
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations(uploadDir);
+                .addResourceLocations(uploadDir)
+                .setCacheControl(org.springframework.http.CacheControl.maxAge(
+                        java.time.Duration.ofDays(1)).cachePublic());
     }
 }

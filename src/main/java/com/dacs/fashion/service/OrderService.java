@@ -80,6 +80,8 @@ public class OrderService {
         order.setDiscountAmount(BigDecimal.ZERO);
 
         List<OrderItem> orderItems = new ArrayList<>();
+        // Snapshot promotion rules once for consistent prices and fewer DB round trips.
+        List<SaleEvent> activeEvents = saleEventService.active();
 
         for (CartItem cartItem : cart.getItems()) {
             ProductVariant variant = variantRepository.findById(cartItem.getVariant().getVariantId())
@@ -99,7 +101,7 @@ public class OrderService {
                 throw new RuntimeException("Không đủ tồn kho: " + variant.getSku());
             }
 
-            BigDecimal price = saleEventService.price(variant.getProduct().getProductId(), variant.getPrice());
+            BigDecimal price = saleEventService.price(variant.getProduct().getProductId(), variant.getPrice(), activeEvents);
             BigDecimal lineTotal = price.multiply(BigDecimal.valueOf(quantity));
             total = total.add(lineTotal);
 

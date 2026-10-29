@@ -37,11 +37,12 @@ public class SaleEventController {
     @GetMapping("/prices")
     public Map<Long, BigDecimal> prices() {
         Map<Long, BigDecimal> result = new HashMap<>();
-        for (var product : products.findAll()) {
-            if (product.getBasePrice() != null) {
-                result.put(product.getProductId(),
-                        service.price(product.getProductId(), product.getBasePrice()));
-            }
+        // One event query + one lightweight projection query instead of N+1 queries.
+        List<SaleEvent> activeEvents = service.active();
+        for (Object[] row : products.findProductPrices()) {
+            Long productId = ((Number) row[0]).longValue();
+            BigDecimal originalPrice = (BigDecimal) row[1];
+            result.put(productId, service.price(productId, originalPrice, activeEvents));
         }
         return result;
     }

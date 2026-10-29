@@ -21,32 +21,22 @@ async function loadMyOrders(){
   }
 
   try{
-    const res = await fetch(`${API_BASE}/orders/user/${user.userId}`, {
-      headers: {
-        "Authorization": "Bearer " + user.token
-      }
-    });
-    myOrders = await res.json();
-
-    if(!res.ok){
-      showToast("Lỗi", myOrders.message || "Không tải được đơn hàng", "error");
+    const headers = { "Authorization": "Bearer " + user.token };
+    // Only this customer's reviews, not every review in the database.
+    // Start both requests together; orders render as soon as its data arrives.
+    const reviewTask = fetch(`${API_BASE}/reviews/user/${user.userId}`, { headers })
+      .then(async response => response.ok ? response.json() : [])
+      .catch(() => []);
+    const res = await fetch(`${API_BASE}/orders/user/${user.userId}`, { headers });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast("Lỗi", data.message || "Không tải được đơn hàng", "error");
       return;
     }
-    try{
-    const reviewRes = await fetch(`${API_BASE}/reviews`);
-
-    if(reviewRes.ok){
-      const data = await reviewRes.json();
-      reviews = Array.isArray(data) ? data : [];
-    }else{
-      reviews = [];
-    }
-  }catch(e){
-    reviews = [];
-  }
-
-  console.log(myOrders);
-  renderOrders();
+    myOrders = Array.isArray(data) ? data : [];
+    reviews = await reviewTask;
+    if (!Array.isArray(reviews)) reviews = [];
+    renderOrders();
 
   }catch(e){
     console.error(e);
@@ -100,14 +90,16 @@ function statusClass(status){
   return "bg-neutral-100 text-neutral-700";
 }
 
+let orderNumberCache = new Map();
+let orderNumberCacheFor = null;
 function getUserOrderNo(order){
-  const sortedByCreatedAt = [...myOrders].sort((a,b)=>{
-    const da = new Date(a.createdAt || 0);
-    const db = new Date(b.createdAt || 0);
-    return da - db;
-  });
-
-  return sortedByCreatedAt.findIndex(o => o.orderId === order.orderId) + 1;
+  if (orderNumberCacheFor !== myOrders) {
+    const sorted = [...myOrders].sort((a,b) =>
+      new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+    orderNumberCache = new Map(sorted.map((o, index) => [o.orderId, index + 1]));
+    orderNumberCacheFor = myOrders;
+  }
+  return orderNumberCache.get(order.orderId) || 0;
 }
 
 
@@ -500,7 +492,7 @@ function orderItemHtml(item,index,order){
     <div class="order-product">
 
       <a href="/detail?productId=${productId}" class="order-product-image">
-        <img src="${img}" alt="${escapeOrderText(p?.productName || "Sản phẩm")}">
+        <img loading="lazy" decoding="async" src="${img}" alt="${escapeOrderText(p?.productName || "Sản phẩm")}">
       </a>
 
       <div class="order-product-info">

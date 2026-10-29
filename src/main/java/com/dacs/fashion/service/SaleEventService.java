@@ -28,8 +28,9 @@ public class SaleEventService {
   entity.setName(input.getName()); entity.setSlug(input.getSlug());entity.setDescription(input.getDescription()); entity.setBannerUrl(input.getBannerUrl());entity.setMobileBannerUrl(input.getMobileBannerUrl());entity.setThemeColor(input.getThemeColor());entity.setStartAt(input.getStartAt());entity.setEndAt(input.getEndAt());entity.setEnabled(input.isEnabled());entity.setDiscountType(input.getDiscountType());entity.setDiscountValue(input.getDiscountValue());entity.setProductIds(new HashSet<>(input.getProductIds()));return repo.save(entity);
  }
  public void delete(Long id){if(!repo.existsById(id))throw new ResponseStatusException(HttpStatus.NOT_FOUND);repo.deleteById(id);}
- public BigDecimal price(Long productId,BigDecimal original){if(original==null)return null; BigDecimal best=original;
-  for(SaleEvent e:active())if(e.getProductIds().contains(productId)){
+ public BigDecimal price(Long productId,BigDecimal original){return price(productId, original, active());}
+ public BigDecimal price(Long productId, BigDecimal original, List<SaleEvent> activeEvents){if(original==null)return null; BigDecimal best=original;
+  for(SaleEvent e:activeEvents)if(e.getProductIds().contains(productId)){
    BigDecimal discounted=e.getDiscountType()==SaleEvent.DiscountType.PERCENT?original.multiply(BigDecimal.ONE.subtract(e.getDiscountValue().divide(BigDecimal.valueOf(100),6,RoundingMode.HALF_UP))):original.subtract(e.getDiscountValue());
    best=best.min(discounted.max(BigDecimal.ZERO));
   }

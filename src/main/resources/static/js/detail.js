@@ -218,20 +218,15 @@ async function loadDetailRelatedProducts(productId) {
     // Tải số lượng đã bán cho các thẻ sản phẩm
     window.soldCounts ||= {};
 
-    await Promise.all(
-      [selectedProduct, ...detailRelatedProducts].map(async p => {
-        try {
-          const count = await fetchJson(
-            `${API_BASE}/products/${p.productId}/sold-count`
-          );
-
-          window.soldCounts[p.productId] = Number(count || 0);
-
-        } catch (error) {
-          window.soldCounts[p.productId] ||= 0;
-        }
-      })
-    );
+    // One aggregate API for all related cards, instead of a request per product.
+    try {
+      const counts = await fetchJson(`${API_BASE}/products/sold-counts`);
+      for (const p of [selectedProduct, ...detailRelatedProducts]) {
+        window.soldCounts[p.productId] = Number(counts?.[p.productId] || 0);
+      }
+    } catch (error) {
+      console.warn("Không tải được lượt bán:", error);
+    }
 
   } catch (error) {
     console.warn(
@@ -451,7 +446,7 @@ function detailPage() {
             <span class="detail-rating-separator">|</span>
 
             <span>
-              ${getSoldCount(p.productId)} đã bán
+              <span id="detail-sold-count">${getSoldCount(p.productId)}</span> đã bán
             </span>
 
           </div>
@@ -648,7 +643,7 @@ function detailPage() {
 
       <!-- RELATED PRODUCTS -->
 
-      ${detailRelatedSection()}
+      <div id="detail-related-placeholder">${detailRelatedSection()}</div>
 
     </main>
 
@@ -679,7 +674,8 @@ async function loadDetailPage() {
 
   try {
 
-    await loadJodokSalePrices();
+    // Independent API requests must not block one another across Singapore/US.
+    const salePricesTask = loadJodokSalePrices();
 
     // PRODUCT
 
@@ -704,26 +700,14 @@ async function loadDetailPage() {
       return;
     }
 
-    // VARIANTS
-
-    try {
-      selectedProductVariants = await fetchJson(
-        `${API_BASE}/variants/product/${productId}`
-      );
-    } catch (error) {
-      selectedProductVariants = [];
-    }
-
-    // REVIEWS
-
-    try {
-      productFeedbacks = await fetchJson(
-        `${API_BASE}/reviews/product/${productId}`
-      );
-
-    } catch (error) {
-      productFeedbacks = [];
-    }
+    // Variant, review and current sale price load concurrently.
+    const [variantResult, reviewResult] = await Promise.all([
+      fetchJson(`${API_BASE}/variants/product/${productId}`).catch(() => []),
+      fetchJson(`${API_BASE}/reviews/product/${productId}`).catch(() => []),
+      salePricesTask
+    ]).then(([v, r]) => [v, r]);
+    selectedProductVariants = Array.isArray(variantResult) ? variantResult : [];
+    productFeedbacks = Array.isArray(reviewResult) ? reviewResult : [];
 
     // RESET SELECTION
 
@@ -736,9 +720,18 @@ async function loadDetailPage() {
 
     // RELATED PRODUCTS
 
-    await loadDetailRelatedProducts(productId);
-
+    // Product detail is usable before the secondary recommendation query finishes.
     renderApp(detailPage());
+    loadDetailRelatedProducts(productId).then(() => {
+      // Update only the related section; never reset the user's chosen size/color.
+      const mount = document.getElementById("detail-related-placeholder");
+      if (mount && Number(selectedProduct?.productId) === productId) {
+        mount.innerHTML = detailRelatedSection();
+        const soldNode = document.getElementById("detail-sold-count");
+        if (soldNode) soldNode.textContent = getSoldCount(productId);
+        if (window.lucide) lucide.createIcons();
+      }
+    }).catch(error => console.warn("Không tải được gợi ý:", error));
 
   } catch (error) {
     console.error("LOAD DETAIL ERROR:", error);

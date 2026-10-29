@@ -65,7 +65,7 @@
               ${reduced ? `<del class="text-[11px] text-neutral-400">${currency(original)}</del>` : ''}
               <strong class="text-sm text-[#922a35]">${valid ? currency(sale) : 'Liên hệ'}</strong>
             </div>
-            <span class="shrink-0 whitespace-nowrap text-right text-[10px] text-neutral-500">${esc(sold)}</span>
+            <span data-bst-sold="${id}" class="shrink-0 whitespace-nowrap text-right text-[10px] text-neutral-500">${esc(sold)}</span>
           </div>
           <a href="${href}" class="mt-2.5 flex items-center justify-center gap-1.5 rounded-lg bg-[#922a35] px-2 py-2 text-[11px] font-bold text-white hover:bg-[#6f1c26] transition"
              aria-label="Chọn màu, size và thêm giỏ hàng">
@@ -193,21 +193,27 @@
         await loadJodokSalePrices();
       }
       state.items=Array.isArray(data.products)?data.products.filter(p=>p && p.status!=='INACTIVE'):[];
-      // Sử dụng đúng API sold-count mà trang chủ đang dùng.
-      // Mỗi sản phẩm tối đa một request, lỗi riêng lẻ không làm hỏng trang BST.
-      const ids = [...new Set(state.items.map(p => Number(p.productId)).filter(Number.isSafeInteger))];
-      await Promise.all(ids.map(async id => {
-        try {
-          const response = await fetch(`${API_BASE}/products/${id}/sold-count`);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const result = await response.json();
-          state.soldCounts[id] = Math.max(0, Number(result) || 0);
-        } catch (error) {
-          state.soldCounts[id] = 0;
-          console.warn(`Không tải được số lượng đã bán của sản phẩm ${id}:`, error);
-        }
-      }));
+      // Draw immediately: sold counts are optional secondary data.
       showDetail();
+      // One aggregate call instead of a request for every collection item.
+      try {
+        const response = await fetch(`${API_BASE}/products/sold-counts`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const counts = await response.json();
+        for (const product of state.items) {
+          const id = Number(product.productId);
+          state.soldCounts[id] = Math.max(0, Number(counts?.[id]) || 0);
+        }
+      } catch (error) {
+        console.warn('Không tải được số lượng đã bán của bộ sưu tập:', error);
+      }
+      // Update visible labels without re-rendering the grid and losing filters.
+      document.querySelectorAll('[data-bst-sold]').forEach(node => {
+        const id = Number(node.dataset.bstSold);
+        const count = state.soldCounts[id] ?? 0;
+        node.textContent = typeof formatSoldCount === 'function'
+          ? formatSoldCount(count) : `${count} đã bán`;
+      });
     } catch(e) {
       console.error('BST:',e);
       paint(`<div class="my-12 rounded-xl border bg-white p-8"><h1 class="text-2xl font-bold text-[#922a35]">Không tải được bộ sưu tập</h1><p class="mt-3 text-neutral-600">${esc(e.message)}</p><a href="/" class="mt-5 inline-block font-semibold text-[#922a35]">← Về trang chủ</a></div>`);

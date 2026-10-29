@@ -358,7 +358,7 @@ function renderCart(){
 
                   return `
                     <div class="p-4 border-b grid md:grid-cols-[76px_minmax(0,1fr)_110px_110px_45px] gap-3 items-center">
-                    <img src="${productImg(item)}" class="w-[76px] h-[88px] object-cover rounded-xl border">
+                    <img loading="lazy" decoding="async" src="${productImg(item)}" class="w-[76px] h-[88px] object-cover rounded-xl border">
 
                     <div>
                       <h3 class="font-bold text-base">
