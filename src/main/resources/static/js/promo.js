@@ -121,31 +121,15 @@ async function loadPromoPage() {
     }
 
 
-    // 5. LOAD SỐ LƯỢNG ĐÃ BÁN
-
-    window.soldCounts = {};
-
-    await Promise.all(
-      promoDiscountedProducts.map(async p => {
-
-        try {
-
-          const sold = await fetchJson(
-            `${API_BASE}/products/${p.productId}/sold-count`
-          );
-
-          window.soldCounts[p.productId] =
-            Number(sold || 0);
-
-        } catch (e) {
-
-          window.soldCounts[p.productId] = 0;
-
-        }
-
-      })
-    );
-
+    // 5. LẤY SỐ LƯỢNG ĐÃ BÁN BẰNG 1 API TỔNG HỢP
+    try {
+      const counts = await fetchJson(`${API_BASE}/products/sold-counts`);
+      window.soldCounts = counts && typeof counts === 'object' && !Array.isArray(counts)
+        ? counts : {};
+    } catch (error) {
+      console.warn('Không tải được số lượng đã bán:', error);
+      window.soldCounts = {};
+    }
 
     // 6. HIỂN THỊ TRANG
 

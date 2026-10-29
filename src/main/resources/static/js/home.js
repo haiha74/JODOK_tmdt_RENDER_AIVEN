@@ -468,12 +468,12 @@ function serviceBenefits() {
 function home() {
   // 6 khu vực: hero, danh mục, BST, sản phẩm (tabs), ưu đãi (nếu có), cam kết.
   return header()
-    + hero()
+    + `<div id="home-hero-mount">${hero()}</div>`
     + categoryGrid()
-    + homeCollectionSection()
-    + recommendSection()
+    + `<div id="home-collections-mount">${homeCollectionSection()}</div>`
+    + `<div id="home-recommendations-mount">${recommendSection()}</div>`
     + homeFeaturedSection()
-    + homeOfferSection()
+    + `<div id="home-offer-mount">${homeOfferSection()}</div>`
     + serviceBenefits()
     + footer();
 }
@@ -482,127 +482,120 @@ function home() {
    LOAD HOME PAGE
 ========================================= */
 
+// Chỉ cập nhật khối cần đổi; tránh dựng lại cả trang và tải lại toàn bộ ảnh.
+function refreshHomeFeatured() {
+  const old = document.getElementById('home-featured');
+  if (!old) return;
+  const element = document.createElement('div');
+  element.innerHTML = homeFeaturedSection();
+  old.replaceWith(element.firstElementChild);
+  if (window.lucide) lucide.createIcons();
+}
+
+function refreshHomeEvents() {
+  const mounts = [
+    ['home-collections-mount', homeCollectionSection()],
+    ['home-offer-mount', homeOfferSection()],
+    ['home-recommendations-mount', recommendSection()]
+  ];
+  mounts.forEach(([id, markup]) => {
+    const mount = document.getElementById(id);
+    if (mount) mount.innerHTML = markup;
+  });
+  const heroMount = document.getElementById('home-hero-mount');
+  if (heroMount) {
+    currentHeroSlide = 0;
+    heroMount.innerHTML = hero();
+    startHeroAutoSlide();
+  }
+  refreshHomeFeatured();
+  if (window.lucide) lucide.createIcons();
+}
+
 async function loadHomePage() {
+  // Vẽ banner và điều hướng ngay, không đợi API /orders và hàng trăm sold-count.
+  renderApp(header() + hero() + `
+    <main class="wrap py-12 text-center" role="status" aria-live="polite">
+      Đang tải sản phẩm JODOK...
+    </main>` + footer());
+  startHeroAutoSlide();
+
   try {
-    const [
-      productData,
-      categoryData,
-      brandData,
-      orderData
-    ] = await Promise.all([
+    // /products là dữ liệu cần thiết; danh mục là dữ liệu phụ, lỗi riêng không chặn trang chủ.
+    const [productData, categoryData] = await Promise.all([
       fetchJson(`${API_BASE}/products`),
-      fetchJson(`${API_BASE}/categories`),
-      fetchJson(`${API_BASE}/brands`).catch(() => []),
-      fetchJson(`${API_BASE}/orders`).catch(() => [])
-    ]);
-
-    await loadJodokSalePrices();
-
-    /* PRODUCTS */
-    allProducts = productData.filter(
-      p => p.status === "ACTIVE"
-    );
-
-    products = allProducts;
-
-    /* CATEGORIES */
-    categories = categoryData;
-
-    /* BRANDS */
-    brands = brandData;
-
-    /* ORDERS */
-    window.allOrders = orderData;
-
-    /* SOLD COUNTS */
-    window.soldCounts = {};
-
-    await Promise.all(
-      allProducts.map(async p => {
-        try {
-          const count = await fetchJson(
-            `${API_BASE}/products/${p.productId}/sold-count`
-          );
-
-          window.soldCounts[p.productId] = Number(count || 0);
-        } catch (e) {
-          window.soldCounts[p.productId] = 0;
-        }
+      fetchJson(`${API_BASE}/categories`).catch(error => {
+        console.warn('Không tải được danh mục:', error);
+        return [];
       })
-    );
+    ]);
+    if (!Array.isArray(productData)) throw new Error('Dữ liệu sản phẩm không hợp lệ');
 
-    /* PERSONALIZED RECOMMENDATIONS */
+    allProducts = productData.filter(p => p && p.status === 'ACTIVE');
+    products = allProducts;
+    categories = Array.isArray(categoryData) ? categoryData : [];
+    window.soldCounts = {};
+    homeSaleEvents = [];
+    jodokLiveEvents = [];
+    recommendProducts = [];
+
     const user = getUser();
     homeIsLoggedIn = Boolean(user?.userId);
 
-    recommendProducts = [];
-
-    if (user?.userId) {
-      try {
-        const suggested = await fetchJson(
-          `${API_BASE}/recommendations/${user.userId}`
-        );
-        recommendProducts = Array.isArray(suggested) ? suggested : [];
-      } catch (e) {
-        recommendProducts = [];
-      }
-    }
-
-    /* ACTIVE SALE EVENTS: chỉ lấy sự kiện đang chạy, lỗi API không chặn trang chủ */
-    try {
-      const events = await fetchJson(`${API_BASE}/events`);
-      homeSaleEvents = Array.isArray(events) ? events.filter(e => e && e.enabled && e.slug) : [];
-    } catch (error) {
-      console.warn('Không tải được sự kiện đang diễn ra:', error);
-      homeSaleEvents = [];
-    }
-
-    /* ACTIVE EVENTS: sự kiện ngoài thời gian chạy không được đưa vào trang chủ */
-    try {
-      const result = await fetchJson(`${API_BASE}/events`);
-      const now = Date.now();
-      homeSaleEvents = Array.isArray(result) ? result.filter(e => {
-        if (!e || !e.slug || !e.enabled || !e.startAt || !e.endAt) return false;
-        const start = new Date(e.startAt).getTime();
-        const end = new Date(e.endAt).getTime();
-        return Number.isFinite(start) && Number.isFinite(end) && start <= now && now < end;
-      }) : [];
-    } catch (error) {
-      console.warn('Không tải được sự kiện JODOK:', error);
-      homeSaleEvents = [];
-    }
-
-    /* RENDER HOME */
+    // Trang chủ được dựng sau 2 API chính; các dữ liệu bổ sung tải độc lập.
     renderApp(home());
+    currentHeroSlide = 0;
+    startHeroAutoSlide();
 
-    /* START SLIDER */
-    setTimeout(() => {
-      startHeroAutoSlide();
-    }, 100);
+    // Chỉ 1 API tổng hợp, không gọi từng sản phẩm; lỗi không ảnh hưởng trang chủ.
+    fetchJson(`${API_BASE}/products/sold-counts`)
+      .then(counts => {
+        window.soldCounts = counts && typeof counts === 'object' && !Array.isArray(counts)
+          ? counts : {};
+        refreshHomeFeatured();
+        // Số lượng đã bán trên thẻ cá nhân hóa cũng cần được cập nhật.
+        const recMount = document.getElementById('home-recommendations-mount');
+        if (recMount) recMount.innerHTML = recommendSection();
+      })
+      .catch(error => console.warn('Không tải được số lượng đã bán:', error));
 
-  } catch (err) {
-    console.error(err);
+    // API sự kiện chỉ gọi MỘT lần; dùng chung để tính giá sale và tạo banner/BST.
+    fetchJson(`${API_BASE}/events`)
+      .then(events => {
+        const now = Date.now();
+        homeSaleEvents = (Array.isArray(events) ? events : []).filter(e => {
+          if (!e || !e.slug || !e.enabled || !e.startAt || !e.endAt) return false;
+          const start = Date.parse(e.startAt);
+          const end = Date.parse(e.endAt);
+          return Number.isFinite(start) && Number.isFinite(end) && start <= now && now < end;
+        });
+        jodokLiveEvents = homeSaleEvents;
+        refreshHomeEvents();
+      })
+      .catch(error => console.warn('Không tải được sự kiện khuyến mãi:', error));
 
-    renderApp(
-      header()
-
-      + `
-        <main class="wrap flex-1 p-10 text-center">
-
-          <h1 class="text-3xl font-bold text-red-800">
-            Không kết nối được backend
-          </h1>
-
-          <p class="mt-3">
-            Kiểm tra Spring Boot đang chạy ở cổng 8080
-            và API /api/products hoạt động.
-          </p>
-
-        </main>
-      `
-
-      + footer()
-    );
+    // Không tải toàn bộ đơn hàng ở trang chủ (không được dùng tại đây).
+    // Chỉ người đã đăng nhập mới tải gợi ý; không chặn banner hoặc sản phẩm.
+    if (user?.userId) {
+      fetchJson(`${API_BASE}/recommendations/${user.userId}`)
+        .then(suggested => {
+          recommendProducts = Array.isArray(suggested) ? suggested : [];
+          const mount = document.getElementById('home-recommendations-mount');
+          if (mount) mount.innerHTML = recommendSection();
+          if (window.lucide) lucide.createIcons();
+        })
+        .catch(error => console.warn('Không tải được gợi ý cá nhân hóa:', error));
+    }
+  } catch (error) {
+    console.error('Không tải được trang chủ:', error);
+    clearInterval(heroInterval);
+    renderApp(header() + `
+      <main class="wrap flex-1 py-16 text-center">
+        <h1 class="text-2xl font-bold text-red-800">Chưa tải được sản phẩm</h1>
+        <p class="mt-3">Máy chủ đang khởi động hoặc dữ liệu tạm thời chưa sẵn sàng.</p>
+        <button type="button" class="mt-6 px-6 py-3 rounded-full bg-red-800 text-white"
+          onclick="loadHomePage()">Tải lại sản phẩm</button>
+      </main>` + footer());
   }
 }
 

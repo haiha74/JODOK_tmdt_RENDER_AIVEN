@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/products")
@@ -25,6 +26,11 @@ public class ProductController {
         }
 
         return productService.getAll();
+    }
+
+    @GetMapping("/sold-counts")
+    public Map<Long, Long> getAllSoldCounts() {
+        return productService.getAllSoldCounts();
     }
 
     @GetMapping("/{id}/sold-count")

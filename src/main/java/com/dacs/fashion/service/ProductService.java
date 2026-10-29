@@ -21,6 +21,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -35,11 +37,9 @@ public class ProductService {
     private final ProductVariantRepository productVariantRepository;
     private final ProductViewRepository productViewRepository;
 
+    @Transactional(readOnly = true)
     public List<Product> getAll() {
-        return productRepository.findAll()
-                .stream()
-                .filter(p -> "ACTIVE".equals(p.getStatus()))
-                .toList();
+        return productRepository.findAllActiveWithCatalogDetails();
     }
 
     public List<Product> getAllForAdmin() {
@@ -121,6 +121,17 @@ public class ProductService {
     public Long getSoldCount(Long productId) {
         Long count = productRepository.getSoldCountByProductId(productId);
         return count != null ? count : 0L;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, Long> getAllSoldCounts() {
+        Map<Long, Long> counts = new LinkedHashMap<>();
+        for (Object[] row : productRepository.findAllSoldCounts()) {
+            if (row[0] != null && row[1] != null) {
+                counts.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+            }
+        }
+        return counts;
     }
 
     @Transactional

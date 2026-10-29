@@ -632,6 +632,7 @@ function searchEnter(e) {
 ========================================= */
 
 async function loadProductsPage() {
+  renderApp(header() + `<main class="wrap py-12 text-center" role="status">Đang tải sản phẩm...</main>` + footer());
   try {
     const params = new URLSearchParams(
       location.search
@@ -645,52 +646,30 @@ async function loadProductsPage() {
 
     searchKeyword = params.get("keyword") || "";
 
-    const [
-      productData,
-      categoryData,
-      brandData,
-      orderData
-    ] = await Promise.all([
-
+    const [productData, categoryData, brandData] = await Promise.all([
       fetchJson(`${API_BASE}/products`),
-
       fetchJson(`${API_BASE}/categories`),
-
-      fetchJson(`${API_BASE}/brands`)
-        .catch(() => []),
-
-      fetchJson(`${API_BASE}/orders`)
-        .catch(() => [])
-
+      fetchJson(`${API_BASE}/brands`).catch(() => [])
     ]);
 
-    await loadJodokSalePrices();
-
-    allProducts = productData.filter(
-      p => p.status === "ACTIVE"
-    );
-
-    categories = categoryData;
-    brands = brandData;
-
-    window.allOrders = orderData;
+    if (!Array.isArray(productData)) throw new Error('Dữ liệu sản phẩm không hợp lệ');
+    allProducts = productData.filter(p => p && p.status === 'ACTIVE');
+    products = allProducts;
+    categories = Array.isArray(categoryData) ? categoryData : [];
+    brands = Array.isArray(brandData) ? brandData : [];
     window.soldCounts = {};
 
-    await Promise.all(
-      allProducts.map(async p => {
-        try {
-          window.soldCounts[p.productId] = Number(
-            await fetchJson(
-              `${API_BASE}/products/${p.productId}/sold-count`
-            ) || 0
-          );
-        } catch (_) {
-          window.soldCounts[p.productId] = 0;
-        }
-      })
-    );
-
+    // Dựng danh sách trước, không đợi /orders hoặc hàng trăm sold-count.
     renderShop();
+
+    fetchJson(`${API_BASE}/products/sold-counts`).then(counts => {
+      window.soldCounts = counts && typeof counts === 'object' && !Array.isArray(counts)
+        ? counts : {};
+      renderShop();
+    }).catch(err => console.warn('Không tải được số lượng đã bán:', err));
+
+    loadJodokSalePrices().then(() => renderShop())
+      .catch(err => console.warn('Không tải được giá khuyến mãi:', err));
 
   } catch (err) {
     console.error(err);
